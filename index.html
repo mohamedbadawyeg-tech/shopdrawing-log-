@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة سجل الشوب دروينج</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* شاشة تسجيل الدخول */
+        .login-container {
+            max-width: 400px;
+            margin: 80px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .login-container h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 26px;
+        }
+        .login-container p {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+            direction: rtl;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #219653;
+        }
+        .user-role {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .error-message {
+            color: #e74c3c;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .help-text {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        .help-text a {
+            color: #3498db;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .help-text a:hover {
+            text-decoration: underline;
+        }
+        
+        /* الواجهة الرئيسية */
+        .app-container {
+            display: none;
+        }
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-badge {
+            background: #3498db;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        
+        /* أزرار التحكم الرئيسية */
+        .main-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: 15px;
+        }
+        .export-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .export-btn, .undo-btn, .redo-btn {
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        .export-btn {
+            background: #27ae60;
+        }
+        .export-btn:hover {
+            background: #219653;
+        }
+        .export-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .undo-btn, .redo-btn {
+            background: #9b59b6;
+        }
+        .undo-btn:hover:not(:disabled), .redo-btn:hover:not(:disabled) {
+            background: #8e44ad;
+        }
+        .undo-btn:disabled, .redo-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        /* لوحة التحكم */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+        }
+        
+        /* نظام الفلترة */
+        .filter-section {
+            margin-bottom: 20px;
+        }
+        .filter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .filter-select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        /* الجدول الرئيسي */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            text-align: right;
+            min-width: 1300px;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: bold;
+            padding: 16px 12px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+        }
+        td {
+            padding: 12px;
+            border: 1px solid #e1e5e9;
+            vertical-align: top;
+            line-height: 1.5;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e3f2fd;
+            transition: 0.3s;
+        }
+        
+        /* أنماط الحالة */
+        .status-a {
+            background-color: #d4edda;
+            color: #155724;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .status-b {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .status-c {
+            background-color: #f8d7da;
+            color: #721c24;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .no-data {
+            color: #999;
+            font-style: italic;
+        }
+        .date-cell {
+            white-space: nowrap;
+        }
+        
+        /* خلايا قابلة للتعديل */
+        .editable-cell {
+            cursor: pointer;
+            transition: background 0.2s;
+            min-height: 40px;
+            position: relative;
+        }
+        .editable-cell:hover {
+            background: #f0f8ff !important;
+        }
+        .editable-input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            direction: rtl;
+        }
+        .editable-select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            direction: rtl;
+            cursor: pointer;
+            z-index: 100;
+            position: relative;
+        }
+        .editable-select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+        
+        /* تسليط الضوء على الخلايا المعدلة حديثاً */
+        .cell-modified {
+            animation: highlightCell 2s ease-out;
+            position: relative;
+        }
+        @keyframes highlightCell {
+            0% { background-color: #fff9c4; }
+            100% { background-color: inherit; }
+        }
+        
+        /* تنسيق خاص للخلايا المنتقاة من Dropdown */
+        .dropdown-cell {
+            background-color: #f8f9fa;
+        }
+        
+        /* طبقة حماية لمنع فقدان التركيز */
+        .edit-protection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 99;
+            display: none;
+        }
+        
+        /* إضافة صف جديد */
+        .add-row-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px dashed #ddd;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-field {
+            flex: 1;
+            min-width: 180px;
+        }
+        
+        /* زر الإضافة */
+        .add-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s;
+        }
+        .add-btn:hover {
+            background: #219653;
+        }
+        
+        /* رسائل النظام */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            max-width: 350px;
+        }
+        .notification.success {
+            background: #27ae60;
+        }
+        .notification.error {
+            background: #e74c3c;
+        }
+        .notification.info {
+            background: #3498db;
+        }
+        .notification.warning {
+            background: #f39c12;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* شريط معلومات التراجع */
+        .undo-info-bar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .undo-info-bar kbd {
+            background: #2c3e50;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            border: 1px solid #7f8c8d;
+        }
+        
+        /* نافذة تصدير Excel */
+        .export-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+        .export-modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        .export-modal h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+            text-align: center;
+        }
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .export-option:hover {
+            background: #e9ecef;
+        }
+        .export-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .export-option label {
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            flex: 1;
+        }
+        .export-option-desc {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+        .export-modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        /* التحميل أثناء التصدير */
+        .export-loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .export-loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .export-loading-text {
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        /* تنسيق خاص للخلايا المنتقاة من Dropdown */
+        .type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            min-width: 80px;
+        }
+        .type-str {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .type-arch {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .type-mep {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .type-elec {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .type-other {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+        }
+        
+        /* منطقة التعديل */
+        .area-cell {
+            background-color: #f8f9fa;
+            font-weight: 500;
+        }
+        
+        /* زر حفظ وإلغاء في الخلية */
+        .cell-actions {
+            position: absolute;
+            top: -30px;
+            left: 0;
+            background: #2c3e50;
+            border-radius: 4px;
+            display: flex;
+            gap: 5px;
+            padding: 5px;
+            z-index: 101;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .cell-action-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .cell-action-btn:hover {
+            background: #2980b9;
+        }
+        .cell-action-btn.cancel {
+            background: #e74c3c;
+        }
+        .cell-action-btn.cancel:hover {
+            background: #c0392b;
+        }
+        
+        /* التجاوب مع الشاشات المختلفة */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .header-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+            }
+            .main-controls {
+                margin-left: 0;
+                margin-top: 10px;
+                flex-wrap: wrap;
+            }
+            .filter-controls {
+                flex-direction: column;
+            }
+            .filter-group {
+                min-width: 100%;
+            }
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            .undo-info-bar {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                flex-direction: column;
+                text-align: center;
+                gap: 5px;
+            }
+            table {
+                min-width: 1400px;
+            }
+            .cell-actions {
+                top: -35px;
+                left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- طبقة حماية لمنع فقدان التركيز -->
+    <div id="editProtection" class="edit-protection"></div>
+    
+    <!-- شاشة تسجيل الدخول -->
+    <div id="loginContainer" class="login-container">
+        <h1>نظام إدارة سجل الشوب دروينج</h1>
+        <p>الرجاء تسجيل الدخول للوصول إلى النظام</p>
+        
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="username">اسم المستخدم</label>
+                <input type="text" id="username" class="form-control" placeholder="أدخل اسم المستخدم" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">كلمة المرور</label>
+                <input type="password" id="password" class="form-control" placeholder="أدخل كلمة المرور" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn btn-primary">تسجيل الدخول</button>
+            <button type="button" id="viewerLogin" class="btn btn-secondary">الدخول كمشاهد فقط</button>
+            
+            <div id="userRole" class="user-role" style="display: none;"></div>
+            <div id="loginError" class="error-message" style="display: none;">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+        </form>
+        
+        <div class="help-text">
+            <p>للحصول على بيانات الدخول، يرجى التواصل مع المسؤول</p>
+            <p><a id="showTestAccounts">عرض حسابات تجريبية للاختبار</a></p>
+        </div>
+        
+        <!-- قسم حسابات الاختبار (مخفي افتراضياً) -->
+        <div id="testAccountsSection" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee; display: none;">
+            <p style="font-size: 14px; color: #7f8c8d; text-align: right; margin-bottom: 15px;">
+                <strong>بيانات تسجيل الدخول للتجربة:</strong>
+            </p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: right; font-size: 13px;">
+                <p><strong>المسؤول:</strong> لديه صلاحيات كاملة (تعديل، إضافة، حذف)</p>
+                <p><strong>المشاهد:</strong> صلاحيات عرض فقط (لا يمكن التعديل)</p>
+                <p style="color: #e74c3c; font-weight: bold; margin-top: 10px;">
+                    ⚠️ تحذير: هذه حسابات تجريبية لأغراض الاختبار فقط
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- الواجهة الرئيسية للتطبيق -->
+    <div id="appContainer" class="app-container">
+        <div class="header">
+            <h1>لوج الخاص باعتماد SHOP DRAWING</h1>
+            <div class="header-controls">
+                <div class="user-info">
+                    <div id="currentUser" class="user-badge"></div>
+                    <button id="logoutButton" class="logout-btn">تسجيل الخروج</button>
+                </div>
+                
+                <!-- أزرار التحكم الرئيسية -->
+                <div class="main-controls">
+                    <!-- أزرار التصدير -->
+                    <div class="export-controls">
+                        <button id="exportBtn" class="export-btn" title="تصدير إلى Excel">
+                            <span>📊</span> تصدير Excel
+                        </button>
+                    </div>
+                    
+                    <!-- أزرار التراجع والإعادة -->
+                    <div class="undo-redo-controls">
+                        <button id="undoBtn" class="undo-btn" title="تراجع (Ctrl+Z)" disabled>
+                            <span>↶</span> تراجع
+                        </button>
+                        <button id="redoBtn" class="redo-btn" title="إعادة (Ctrl+Y)" disabled>
+                            إعادة <span>↷</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- لوحة التحكم -->
+        <div class="dashboard">
+            <div class="card">
+                <h3>إحصائيات السجل</h3>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>إجمالي الطلبات:</span>
+                    <strong id="totalRecords">0</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>حالة A:</span>
+                    <strong id="statusA">0</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>حالة B:</span>
+                    <strong id="statusB">0</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>حالة C:</span>
+                    <strong id="statusC">0</strong>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>إضافة سجل جديد</h3>
+                <p style="margin-bottom: 15px; color: #7f8c8d;">إضافة طلب اعتماد جديد إلى السجل</p>
+                <button id="showAddForm" class="add-btn">
+                    <span style="font-size: 18px;">+</span> إضافة طلب جديد
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3>حالة النظام</h3>
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <div style="width: 12px; height: 12px; background: #27ae60; border-radius: 50%; margin-left: 10px;"></div>
+                    <span>الاتصال بالسحابة: <strong>نشط</strong></span>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 12px; height: 12px; background: #27ae60; border-radius: 50%; margin-left: 10px;"></div>
+                    <span>الحفظ التلقائي: <strong>مفعل</strong></span>
+                </div>
+                <div id="lastSaved" style="margin-top: 15px; font-size: 13px; color: #7f8c8d;"></div>
+                <div id="undoHistory" style="margin-top: 10px; font-size: 13px; color: #7f8c8d;">
+                    <span id="undoCount">0</span> تغيير قابلة للتراجع
+                </div>
+                <div id="exportInfo" style="margin-top: 10px; font-size: 13px; color: #7f8c8d;">
+                    آخر تصدير: <span id="lastExport">لم يتم التصدير بعد</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- نظام الفلترة -->
+        <div class="card filter-section">
+            <h3>فلترة البيانات</h3>
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label>نوع الاعتماد</label>
+                    <select id="filterType" class="filter-select">
+                        <option value="">جميع الأنواع</option>
+                        <option value="STR">STR</option>
+                        <option value="ARCH">ARCH</option>
+                        <option value="MEP">MEP</option>
+                        <option value="ELEC">ELEC</option>
+                        <option value="OTHER">أخرى</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>المنطقة</label>
+                    <select id="filterArea" class="filter-select">
+                        <option value="">جميع المناطق</option>
+                        <option value="المبني الرئيسي">المبني الرئيسي</option>
+                        <option value="المنصة">المنصة</option>
+                        <option value="الطابق الأرضي">الطابق الأرضي</option>
+                        <option value="الطابق المتوسط">الطابق المتوسط</option>
+                        <option value="السطح">السطح</option>
+                        <option value="الطابق السفلي">الطابق السفلي</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>حالة الاعتماد</label>
+                    <select id="filterStatus" class="filter-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="code A">code A</option>
+                        <option value="code B">code B</option>
+                        <option value="CODE C">CODE C</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>من تاريخ</label>
+                    <input type="date" id="filterFromDate" class="filter-select">
+                </div>
+                
+                <div class="filter-group">
+                    <label>إلى تاريخ</label>
+                    <input type="date" id="filterToDate" class="filter-select">
+                </div>
+                
+                <div class="filter-actions">
+                    <button id="applyFilter" class="btn btn-primary">تطبيق الفلترة</button>
+                    <button id="clearFilter" class="btn btn-secondary">مسح الفلترة</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- نموذج إضافة صف جديد (مخفي بشكل افتراضي) -->
+        <div id="addRowForm" class="add-row-form" style="display: none;">
+            <h3 style="margin-bottom: 15px; color: #2c3e50;">إضافة طلب اعتماد جديد</h3>
+            <div class="form-row">
+                <div class="form-field">
+                    <label>NO</label>
+                    <input type="text" id="newNo" class="form-control" placeholder="سيتم تعيينه تلقائياً" readonly>
+                </div>
+                <div class="form-field">
+                    <label>نوع الاعتماد</label>
+                    <select id="newType" class="form-control" required>
+                        <option value="">اختر النوع</option>
+                        <option value="STR">STR</option>
+                        <option value="ARCH">ARCH</option>
+                        <option value="MEP">MEP</option>
+                        <option value="ELEC">ELEC</option>
+                        <option value="OTHER">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>المنطقة</label>
+                    <select id="newArea" class="form-control" required>
+                        <option value="">اختر المنطقة</option>
+                        <option value="المبني الرئيسي">المبني الرئيسي</option>
+                        <option value="المنصة">المنصة</option>
+                        <option value="الطابق الأرضي">الطابق الأرضي</option>
+                        <option value="الطابق المتوسط">الطابق المتوسط</option>
+                        <option value="السطح">السطح</option>
+                        <option value="الطابق السفلي">الطابق السفلي</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>REVISION</label>
+                    <input type="text" id="newRevision" class="form-control" placeholder="00" value="00">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-field">
+                    <label>طلب الاعتماد</label>
+                    <input type="text" id="newRequest" class="form-control" placeholder="تفاصيل الطلب" required>
+                </div>
+                <div class="form-field">
+                    <label>تاريخ استلام الطلب</label>
+                    <input type="date" id="newReceiveDate" class="form-control" required>
+                </div>
+                <div class="form-field">
+                    <label>حالة الاعتماد</label>
+                    <select id="newStatus" class="form-control">
+                        <option value="">اختر الحالة</option>
+                        <option value="code A">code A</option>
+                        <option value="code B">code B</option>
+                        <option value="CODE C">CODE C</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>تاريخ الاعتماد</label>
+                    <input type="date" id="newApproveDate" class="form-control">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-field">
+                    <label>المسؤول</label>
+                    <input type="text" id="newResponsible" class="form-control" placeholder="اسم المسؤول">
+                </div>
+                <div class="form-field">
+                    <label>ملاحظات</label>
+                    <input type="text" id="newNotes" class="form-control" placeholder="ملاحظات إضافية">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="saveNewRow" class="btn btn-primary">حفظ السجل الجديد</button>
+                <button id="cancelAddRow" class="btn btn-secondary">إلغاء</button>
+            </div>
+        </div>
+        
+        <!-- الجدول الرئيسي -->
+        <div class="table-container">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th width="50">NO</th>
+                        <th width="100">نوع الاعتماد</th>
+                        <th width="120">المنطقة</th>
+                        <th width="100">REVISION</th>
+                        <th width="250">طلب الاعتماد</th>
+                        <th width="120">تاريخ استلام الطلب</th>
+                        <th width="100">حالة الاعتماد</th>
+                        <th width="120">تاريخ الاعتماد</th>
+                        <th width="120">المسؤول</th>
+                        <th width="100">ملاحظات</th>
+                        <th id="actionsHeader" style="display: none; width="120">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- سيتم ملء البيانات بواسطة JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- رسالة عندما لا توجد بيانات -->
+        <div id="noDataMessage" style="text-align: center; padding: 40px; display: none;">
+            <h3 style="color: #7f8c8d; margin-bottom: 15px;">لا توجد بيانات تطابق معايير الفلترة</h3>
+            <button id="resetFilterBtn" class="btn btn-primary">عرض جميع البيانات</button>
+        </div>
+        
+        <!-- شريط معلومات التراجع -->
+        <div id="undoInfoBar" class="undo-info-bar" style="display: none;">
+            <div>
+                <strong>مفاتيح الاختصار:</strong>
+                <span style="margin-right: 15px;"><kbd>Ctrl</kbd> + <kbd>Z</kbd> للتراجع</span>
+                <span><kbd>Ctrl</kbd> + <kbd>Y</kbd> للإعادة</span>
+            </div>
+            <button id="hideUndoInfo" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">✕</button>
+        </div>
+        
+        <!-- نافذة تصدير Excel -->
+        <div id="exportModal" class="export-modal">
+            <div class="export-modal-content">
+                <h3>تصدير البيانات إلى Excel</h3>
+                <div class="export-options">
+                    <div class="export-option" onclick="selectExportOption('current')">
+                        <input type="radio" id="exportCurrent" name="exportOption" value="current" checked>
+                        <div>
+                            <label for="exportCurrent">البيانات المعروضة حالياً</label>
+                            <div class="export-option-desc">تصدير البيانات المفلترة والمعروضة على الشاشة</div>
+                        </div>
+                    </div>
+                    
+                    <div class="export-option" onclick="selectExportOption('all')">
+                        <input type="radio" id="exportAll" name="exportOption" value="all">
+                        <div>
+                            <label for="exportAll">جميع البيانات</label>
+                            <div class="export-option-desc">تصدير جميع البيانات الموجودة في النظام</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <input type="checkbox" id="includeDates" checked style="margin-left: 10px;">
+                        <label for="includeDates" style="flex: 1; cursor: pointer;">تضمين التواريخ بصيغة Excel</label>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="includeStats" checked style="margin-left: 10px;">
+                        <label for="includeStats" style="flex: 1; cursor: pointer;">تضمين صفحة إحصاءات</label>
+                    </div>
+                </div>
+                
+                <div class="export-modal-actions">
+                    <button id="cancelExport" class="btn btn-secondary">إلغاء</button>
+                    <button id="confirmExport" class="btn btn-success">تصدير الآن</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- شاشة التحميل أثناء التصدير -->
+        <div id="exportLoading" class="export-loading">
+            <div class="export-loading-spinner"></div>
+            <div class="export-loading-text">جاري تحضير ملف Excel...</div>
+        </div>
+    </div>
+    
+    <!-- إشعارات النظام -->
+    <div id="notification" class="notification" style="display: none;"></div>
+
+    <script>
+        // قائمة الأنواع الثابتة
+        const APPROVAL_TYPES = [
+            { value: "STR", label: "STR", color: "type-str" },
+            { value: "ARCH", label: "ARCH", color: "type-arch" },
+            { value: "MEP", label: "MEP", color: "type-mep" },
+            { value: "ELEC", label: "ELEC", color: "type-elec" },
+            { value: "OTHER", label: "أخرى", color: "type-other" }
+        ];
+        
+        // قائمة المناطق الثابتة
+        const AREAS = [
+            "المبني الرئيسي",
+            "المنصة", 
+            "الطابق الأرضي",
+            "الطابق المتوسط",
+            "السطح",
+            "الطابق السفلي",
+            "أخرى"
+        ];
+        
+        // بيانات المستخدمين
+        const users = {
+            admin: { password: "password123", role: "admin", name: "مدير النظام" },
+            viewer: { password: "view123", role: "viewer", name: "مشاهد" }
+        };
+        
+        // بيانات السجل - مع تحديث الهيكل ليشمل المنطقة
+        let shopDrawingData = [
+            { no: "01", type: "STR", area: "المبني الرئيسي", revision: "00", request: "LAYOUT", receiveDate: "2023-12-13", status: "", approveDate: "", responsible: "SYSTRA", notes: "" },
+            { no: "02", type: "STR", area: "المبني الرئيسي", revision: "00", request: "الابعاد الخرسانية للقواعد العادية", receiveDate: "2023-12-13", status: "code B", approveDate: "2023-12-18", responsible: "SYSTRA", notes: "" },
+            { no: "03", type: "STR", area: "المبني الرئيسي", revision: "00", request: "الابعاد الخرسانية للقواعد المسلحة", receiveDate: "2023-12-13", status: "code B", approveDate: "2023-12-24", responsible: "SYSTRA", notes: "" },
+            { no: "04", type: "STR", area: "المبني الرئيسي", revision: "columns (P14,P16,P19,P20)", request: "تسليح القواعد المسلحة", receiveDate: "2023-12-13", status: "code B", approveDate: "2023-12-24", responsible: "SYSTRA", notes: "" },
+            { no: "05", type: "STR", area: "المبني الرئيسي", revision: "frames (P14,P15,P16,P19,P20,P24,P25,P26,P27,P28,PA2)", request: "تسليح TIE BEAMS", receiveDate: "2023-12-13", status: "code B", approveDate: "2023-12-25", responsible: "SYSTRA", notes: "" }
+        ];
+        
+        // إضافة المزيد من البيانات لملء الجدول مع مناطق متنوعة
+        for (let i = 6; i <= 40; i++) {
+            const statuses = ["", "code A", "code B", "CODE C"];
+            const types = APPROVAL_TYPES.map(t => t.value);
+            const areas = AREAS.filter(a => a !== "أخرى");
+            const responsibleOptions = ["SYSTRA", "ECG", "", "فريق البناء", "فريق الكهرباء", "فريق الهندسة المعمارية"];
+            
+            shopDrawingData.push({
+                no: i.toString().padStart(2, '0'),
+                type: types[Math.floor(Math.random() * types.length)],
+                area: areas[Math.floor(Math.random() * areas.length)],
+                revision: Math.floor(Math.random() * 3).toString().padStart(2, '0'),
+                request: `طلب اعتماد رقم ${i} ل${areas[Math.floor(Math.random() * areas.length)]}`,
+                receiveDate: `2024-${Math.floor(Math.random() * 12 + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 28 + 1).toString().padStart(2, '0')}`,
+                status: statuses[Math.floor(Math.random() * statuses.length)],
+                approveDate: Math.random() > 0.2 ? `2024-${Math.floor(Math.random() * 12 + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 28 + 1).toString().padStart(2, '0')}` : "",
+                responsible: responsibleOptions[Math.floor(Math.random() * responsibleOptions.length)],
+                notes: Math.random() > 0.7 ? "ملاحظة عينة" : ""
+            });
+        }
+        
+        // نظام التراجع
+        let undoStack = [];
+        let redoStack = [];
+        const MAX_UNDO_STEPS = 50;
+        
+        // حالة النظام
+        let currentUser = null;
+        let isViewerMode = false;
+        let lastSavedTime = null;
+        let autoSaveInterval = null;
+        let lastAction = null;
+        let cellEditTimeout = null;
+        let showUndoInfo = true;
+        let showTestAccounts = false;
+        let filteredData = null;
+        let lastExportTime = null;
+        
+        // حالة التعديل الحالي
+        let currentEdit = {
+            cell: null,
+            originalContent: null,
+            rowIndex: null,
+            cellIndex: null,
+            fieldName: null,
+            oldValue: null
+        };
+        
+        // عناصر DOM
+        const loginContainer = document.getElementById('loginContainer');
+        const appContainer = document.getElementById('appContainer');
+        const loginForm = document.getElementById('loginForm');
+        const viewerLogin = document.getElementById('viewerLogin');
+        const loginError = document.getElementById('loginError');
+        const userRole = document.getElementById('userRole');
+        const logoutButton = document.getElementById('logoutButton');
+        const currentUserElement = document.getElementById('currentUser');
+        const tableBody = document.getElementById('tableBody');
+        const notification = document.getElementById('notification');
+        const totalRecords = document.getElementById('totalRecords');
+        const statusA = document.getElementById('statusA');
+        const statusB = document.getElementById('statusB');
+        const statusC = document.getElementById('statusC');
+        const showAddForm = document.getElementById('showAddForm');
+        const addRowForm = document.getElementById('addRowForm');
+        const saveNewRow = document.getElementById('saveNewRow');
+        const cancelAddRow = document.getElementById('cancelAddRow');
+        const applyFilter = document.getElementById('applyFilter');
+        const clearFilter = document.getElementById('clearFilter');
+        const filterType = document.getElementById('filterType');
+        const filterArea = document.getElementById('filterArea');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterFromDate = document.getElementById('filterFromDate');
+        const filterToDate = document.getElementById('filterToDate');
+        const noDataMessage = document.getElementById('noDataMessage');
+        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        const lastSavedElement = document.getElementById('lastSaved');
+        const actionsHeader = document.getElementById('actionsHeader');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const undoCount = document.getElementById('undoCount');
+        const undoInfoBar = document.getElementById('undoInfoBar');
+        const hideUndoInfo = document.getElementById('hideUndoInfo');
+        const showTestAccountsLink = document.getElementById('showTestAccounts');
+        const testAccountsSection = document.getElementById('testAccountsSection');
+        const exportBtn = document.getElementById('exportBtn');
+        const exportModal = document.getElementById('exportModal');
+        const cancelExport = document.getElementById('cancelExport');
+        const confirmExport = document.getElementById('confirmExport');
+        const exportLoading = document.getElementById('exportLoading');
+        const lastExportElement = document.getElementById('lastExport');
+        const includeDates = document.getElementById('includeDates');
+        const includeStats = document.getElementById('includeStats');
+        const editProtection = document.getElementById('editProtection');
+        
+        // تهيئة التواريخ في الفلترة
+        const today = new Date();
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+        filterFromDate.valueAsDate = lastMonth;
+        filterToDate.valueAsDate = today;
+        
+        // تسجيل الدخول
+        function login(username, password, isViewer = false) {
+            if (isViewer) {
+                currentUser = { username: "viewer", role: "viewer", name: "مشاهد" };
+                isViewerMode = true;
+                showNotification("تم الدخول كمشاهد (وضع القراءة فقط)", "info");
+            } else if (users[username] && users[username].password === password) {
+                currentUser = { username, ...users[username] };
+                isViewerMode = false;
+                showNotification(`مرحباً ${currentUser.name}`, "success");
+            } else {
+                loginError.style.display = 'block';
+                return false;
+            }
+            
+            loginContainer.style.display = 'none';
+            appContainer.style.display = 'block';
+            currentUserElement.textContent = `${currentUser.name} (${currentUser.role === 'admin' ? 'مسؤول' : 'مشاهد'})`;
+            
+            loadData();
+            updateStats();
+            updateUndoButtons();
+            startAutoSave();
+            
+            if (showUndoInfo && !isViewerMode) {
+                setTimeout(() => {
+                    undoInfoBar.style.display = 'flex';
+                }, 2000);
+            }
+            
+            return true;
+        }
+        
+        // تسجيل الخروج
+        function logout() {
+            currentUser = null;
+            isViewerMode = false;
+            appContainer.style.display = 'none';
+            loginContainer.style.display = 'block';
+            loginForm.reset();
+            loginError.style.display = 'none';
+            userRole.style.display = 'none';
+            showNotification("تم تسجيل الخروج بنجاح", "info");
+            clearInterval(autoSaveInterval);
+        }
+        
+        // عرض/إخفاء حسابات الاختبار
+        function toggleTestAccounts() {
+            showTestAccounts = !showTestAccounts;
+            testAccountsSection.style.display = showTestAccounts ? 'block' : 'none';
+            showTestAccountsLink.textContent = showTestAccounts ? 'إخفاء حسابات الاختبار' : 'عرض حسابات تجريبية للاختبار';
+        }
+        
+        // نظام التراجع
+        function saveStateBeforeEdit(actionType, rowIndex, cellIndex = null, oldValue = null, newValue = null) {
+            if (isViewerMode) return;
+            
+            const state = {
+                action: actionType,
+                timestamp: new Date(),
+                data: JSON.parse(JSON.stringify(shopDrawingData)),
+                rowIndex: rowIndex,
+                cellIndex: cellIndex,
+                oldValue: oldValue,
+                newValue: newValue
+            };
+            
+            undoStack.push(state);
+            
+            if (undoStack.length > MAX_UNDO_STEPS) {
+                undoStack.shift();
+            }
+            
+            redoStack = [];
+            updateUndoButtons();
+            lastAction = actionType;
+        }
+        
+        // تنفيذ التراجع
+        function undo() {
+            if (undoStack.length === 0 || isViewerMode) return;
+            
+            const lastState = undoStack.pop();
+            const currentState = {
+                action: lastState.action,
+                timestamp: new Date(),
+                data: JSON.parse(JSON.stringify(shopDrawingData)),
+                rowIndex: lastState.rowIndex,
+                cellIndex: lastState.cellIndex,
+                oldValue: lastState.newValue,
+                newValue: lastState.oldValue
+            };
+            
+            redoStack.push(currentState);
+            shopDrawingData = lastState.data;
+            loadData();
+            
+            if (lastState.rowIndex !== null && lastState.cellIndex !== null) {
+                highlightCell(lastState.rowIndex, lastState.cellIndex);
+            }
+            
+            let actionText = "";
+            switch(lastState.action) {
+                case "edit": actionText = "تعديل خلية"; break;
+                case "add": actionText = "إضافة سجل"; break;
+                case "delete": actionText = "حذف سجل"; break;
+                case "multiEdit": actionText = "تعديل متعدد"; break;
+                default: actionText = "تغيير";
+            }
+            showNotification(`تم التراجع عن ${actionText}`, "warning");
+            
+            saveToLocalStorage();
+            updateUndoButtons();
+        }
+        
+        // تنفيذ الإعادة
+        function redo() {
+            if (redoStack.length === 0 || isViewerMode) return;
+            
+            const nextState = redoStack.pop();
+            const currentState = {
+                action: nextState.action,
+                timestamp: new Date(),
+                data: JSON.parse(JSON.stringify(shopDrawingData)),
+                rowIndex: nextState.rowIndex,
+                cellIndex: nextState.cellIndex,
+                oldValue: nextState.newValue,
+                newValue: nextState.oldValue
+            };
+            
+            undoStack.push(currentState);
+            shopDrawingData = nextState.data;
+            loadData();
+            
+            if (nextState.rowIndex !== null && nextState.cellIndex !== null) {
+                highlightCell(nextState.rowIndex, nextState.cellIndex);
+            }
+            
+            let actionText = "";
+            switch(nextState.action) {
+                case "edit": actionText = "تعديل خلية"; break;
+                case "add": actionText = "إضافة سجل"; break;
+                case "delete": actionText = "حذف سجل"; break;
+                case "multiEdit": actionText = "تعديل متعدد"; break;
+                default: actionText = "تغيير";
+            }
+            showNotification(`تم إعادة ${actionText}`, "info");
+            
+            saveToLocalStorage();
+            updateUndoButtons();
+        }
+        
+        // تسليط الضوء على خلية
+        function highlightCell(rowIndex, cellIndex) {
+            const rows = tableBody.querySelectorAll('tr');
+            if (rows[rowIndex]) {
+                const cells = rows[rowIndex].querySelectorAll('td');
+                if (cells[cellIndex]) {
+                    cells[cellIndex].classList.add('cell-modified');
+                    setTimeout(() => {
+                        cells[cellIndex].classList.remove('cell-modified');
+                    }, 2000);
+                }
+            }
+        }
+        
+        // تحديث حالة أزرار التراجع والإعادة
+        function updateUndoButtons() {
+            undoBtn.disabled = undoStack.length === 0 || isViewerMode;
+            redoBtn.disabled = redoStack.length === 0 || isViewerMode;
+            undoCount.textContent = undoStack.length;
+            undoBtn.title = `تراجع (${undoStack.length} خطوة${undoStack.length !== 1 ? 'ات' : ''} متاحة)`;
+            redoBtn.title = `إعادة (${redoStack.length} خطوة${redoStack.length !== 1 ? 'ات' : ''} متاحة)`;
+        }
+        
+        // الحصول على نوع الاعتماد بصيغة HTML
+        function getTypeBadge(type) {
+            const typeObj = APPROVAL_TYPES.find(t => t.value === type) || APPROVAL_TYPES.find(t => t.value === "OTHER");
+            return `<span class="type-badge ${typeObj.color}">${typeObj.label}</span>`;
+        }
+        
+        // الحصول على المنطقة بصيغة HTML
+        function getAreaCell(area) {
+            return area || '<span class="no-data">---</span>';
+        }
+        
+        // تحميل وعرض البيانات
+        function loadData(data = null) {
+            filteredData = data || shopDrawingData;
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = '';
+                noDataMessage.style.display = 'block';
+                exportBtn.disabled = true;
+                return;
+            }
+            
+            noDataMessage.style.display = 'none';
+            tableBody.innerHTML = '';
+            exportBtn.disabled = false;
+            
+            filteredData.forEach((item, index) => {
+                const row = document.createElement('tr');
+                const originalIndex = shopDrawingData.findIndex(sd => sd.no === item.no);
+                
+                // إضافة خلايا الصف
+                const cells = [
+                    item.no,
+                    getTypeBadge(item.type),
+                    getAreaCell(item.area),
+                    item.revision,
+                    item.request,
+                    formatDate(item.receiveDate),
+                    getStatusBadge(item.status),
+                    formatDate(item.approveDate),
+                    item.responsible || '<span class="no-data">---</span>',
+                    item.notes || '<span class="no-data">---</span>'
+                ];
+                
+                cells.forEach(cellContent => {
+                    const cell = document.createElement('td');
+                    cell.innerHTML = cellContent;
+                    
+                    // إضافة class خاص للخلايا المنتقاة من dropdown
+                    if (cellContent.includes('type-badge') || cellContent.includes('area-cell')) {
+                        cell.classList.add('dropdown-cell');
+                    }
+                    
+                    row.appendChild(cell);
+                });
+                
+                if (!isViewerMode) {
+                    const actionsCell = document.createElement('td');
+                    actionsCell.innerHTML = `
+                        <button onclick="editRow(${originalIndex})" style="background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-left: 5px; cursor: pointer;">تعديل</button>
+                        <button onclick="deleteRow(${originalIndex})" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">حذف</button>
+                    `;
+                    row.appendChild(actionsCell);
+                }
+                
+                if (!isViewerMode) {
+                    const editableCells = row.querySelectorAll('td:not(:last-child)');
+                    editableCells.forEach((cell, cellIndex) => {
+                        cell.classList.add('editable-cell');
+                        
+                        // إزالة أي مستمعات سابقة لمنع التكرار
+                        cell.removeEventListener('click', handleCellClick);
+                        cell.removeEventListener('dblclick', handleCellDoubleClick);
+                        
+                        // إضافة مستمعات جديدة
+                        cell.addEventListener('click', handleCellClick);
+                        cell.addEventListener('dblclick', handleCellDoubleClick);
+                    });
+                }
+                
+                tableBody.appendChild(row);
+            });
+            
+            actionsHeader.style.display = isViewerMode ? 'none' : 'table-cell';
+            updateStats(filteredData);
+        }
+        
+        // معالجة النقر على الخلية
+        function handleCellClick(e) {
+            if (isViewerMode) return;
+            
+            const cell = e.target.closest('td');
+            if (!cell || cell === currentEdit.cell) return;
+            
+            if (currentEdit.cell) {
+                cancelCurrentEdit();
+            }
+            
+            if (cellEditTimeout) clearTimeout(cellEditTimeout);
+            cellEditTimeout = setTimeout(() => {
+                startCellEdit(cell);
+            }, 300);
+        }
+        
+        // معالجة النقر المزدوج على الخلية
+        function handleCellDoubleClick(e) {
+            if (isViewerMode) return;
+            
+            const cell = e.target.closest('td');
+            if (!cell || cell === currentEdit.cell) return;
+            
+            if (cellEditTimeout) clearTimeout(cellEditTimeout);
+            
+            if (currentEdit.cell) {
+                cancelCurrentEdit();
+            }
+            
+            startCellEdit(cell);
+        }
+        
+        // بدء تعديل الخلية
+        function startCellEdit(cell) {
+            if (isViewerMode) return;
+            
+            const row = cell.parentElement;
+            const rowIndex = Array.from(tableBody.children).indexOf(row);
+            const cellIndex = Array.from(row.children).indexOf(cell);
+            const fieldNames = ['no', 'type', 'area', 'revision', 'request', 'receiveDate', 'status', 'approveDate', 'responsible', 'notes'];
+            const fieldName = fieldNames[cellIndex];
+            
+            // حفظ حالة التعديل الحالي
+            currentEdit.cell = cell;
+            currentEdit.originalContent = cell.innerHTML;
+            currentEdit.rowIndex = rowIndex;
+            currentEdit.cellIndex = cellIndex;
+            currentEdit.fieldName = fieldName;
+            currentEdit.oldValue = getCellValue(cell.innerHTML);
+            
+            // حفظ الحالة قبل التعديل في نظام التراجع
+            saveStateBeforeEdit("edit", rowIndex, cellIndex, currentEdit.oldValue, "");
+            
+            // إظهار طبقة الحماية
+            editProtection.style.display = 'block';
+            
+            // إنشاء محرر مناسب لنوع الحقل
+            if (fieldName === 'type' || fieldName === 'area' || fieldName === 'status') {
+                createDropdownEditor(cell, fieldName, currentEdit.oldValue);
+            } else if (fieldName === 'receiveDate' || fieldName === 'approveDate') {
+                createDateEditor(cell, fieldName, currentEdit.oldValue);
+            } else {
+                createTextEditor(cell, fieldName, currentEdit.oldValue);
+            }
+        }
+        
+        // إنشاء محرر Dropdown
+        function createDropdownEditor(cell, fieldName, currentValue) {
+            const select = document.createElement('select');
+            select.className = 'editable-select';
+            
+            let options = [];
+            
+            if (fieldName === 'type') {
+                options = APPROVAL_TYPES;
+            } else if (fieldName === 'area') {
+                options = AREAS.map(area => ({ value: area, label: area }));
+            } else if (fieldName === 'status') {
+                options = [
+                    { value: '', label: '---' },
+                    { value: 'code A', label: 'code A' },
+                    { value: 'code B', label: 'code B' },
+                    { value: 'CODE C', label: 'CODE C' }
+                ];
+            }
+            
+            // إضافة خيارات الـ Dropdown
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = option.label;
+                if (option.value === currentValue) {
+                    optionElement.selected = true;
+                }
+                select.appendChild(optionElement);
+            });
+            
+            // إضافة حدث تغيير لحفظ التعديل
+            select.addEventListener('change', () => {
+                saveCurrentEdit(select.value);
+            });
+            
+            // إضافة أحداث لوحة المفاتيح
+            select.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveCurrentEdit(select.value);
+                } else if (e.key === 'Escape') {
+                    cancelCurrentEdit();
+                }
+            });
+            
+            // استبدال محتوى الخلية
+            cell.innerHTML = '';
+            cell.appendChild(select);
+            select.focus();
+            
+            // إضافة أزرار الحفظ والإلغاء
+            createCellActions(cell, select.value);
+        }
+        
+        // إنشاء محرر نصوص
+        function createTextEditor(cell, fieldName, currentValue) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'editable-input';
+            input.value = currentValue || '';
+            
+            // إضافة أحداث لوحة المفاتيح
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveCurrentEdit(input.value);
+                } else if (e.key === 'Escape') {
+                    cancelCurrentEdit();
+                }
+            });
+            
+            // استبدال محتوى الخلية
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+            
+            // إضافة أزرار الحفظ والإلغاء
+            createCellActions(cell, input.value);
+        }
+        
+        // إنشاء محرر تواريخ
+        function createDateEditor(cell, fieldName, currentValue) {
+            const input = document.createElement('input');
+            input.type = 'date';
+            input.className = 'editable-input';
+            input.value = currentValue || '';
+            
+            // إضافة أحداث لوحة المفاتيح
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveCurrentEdit(input.value);
+                } else if (e.key === 'Escape') {
+                    cancelCurrentEdit();
+                }
+            });
+            
+            // حدث تغيير للحفظ عند اختيار تاريخ
+            input.addEventListener('change', () => {
+                saveCurrentEdit(input.value);
+            });
+            
+            // استبدال محتوى الخلية
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.focus();
+            
+            // إضافة أزرار الحفظ والإلغاء
+            createCellActions(cell, input.value);
+        }
+        
+        // إنشاء أزرار الحفظ والإلغاء للخلية
+        function createCellActions(cell, currentValue) {
+            // إزالة أي أزرار سابقة
+            const existingActions = cell.querySelector('.cell-actions');
+            if (existingActions) {
+                existingActions.remove();
+            }
+            
+            // إنشاء أزرار جديدة
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'cell-actions';
+            
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'cell-action-btn';
+            saveBtn.innerHTML = '💾 حفظ';
+            saveBtn.onclick = () => saveCurrentEdit(currentValue);
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'cell-action-btn cancel';
+            cancelBtn.innerHTML = '✕ إلغاء';
+            cancelBtn.onclick = cancelCurrentEdit;
+            
+            actionsDiv.appendChild(saveBtn);
+            actionsDiv.appendChild(cancelBtn);
+            
+            cell.appendChild(actionsDiv);
+        }
+        
+        // حفظ التعديل الحالي
+        function saveCurrentEdit(newValue) {
+            if (!currentEdit.cell || !currentEdit.fieldName) return;
+            
+            const rowIndex = currentEdit.rowIndex;
+            const cellIndex = currentEdit.cellIndex;
+            const fieldName = currentEdit.fieldName;
+            const oldValue = currentEdit.oldValue;
+            
+            // تحديث البيانات
+            shopDrawingData[rowIndex][fieldName] = newValue;
+            
+            // تحديث الحالة الأخيرة في نظام التراجع
+            if (undoStack.length > 0) {
+                const lastState = undoStack[undoStack.length - 1];
+                if (lastState.rowIndex === rowIndex && lastState.cellIndex === cellIndex) {
+                    lastState.newValue = newValue;
+                }
+            }
+            
+            // تحديث عرض الخلية
+            if (fieldName === 'type') {
+                currentEdit.cell.innerHTML = getTypeBadge(newValue);
+            } else if (fieldName === 'area') {
+                currentEdit.cell.innerHTML = getAreaCell(newValue);
+            } else if (fieldName === 'status') {
+                currentEdit.cell.innerHTML = getStatusBadge(newValue);
+            } else if (fieldName.includes('Date')) {
+                currentEdit.cell.innerHTML = formatDate(newValue);
+            } else {
+                currentEdit.cell.innerHTML = newValue || '<span class="no-data">---</span>';
+            }
+            
+            // إعادة إضافة class dropdown-cell إذا لزم الأمر
+            if (fieldName === 'type' || fieldName === 'area') {
+                currentEdit.cell.classList.add('dropdown-cell');
+            }
+            
+            // تسليط الضوء على الخلية المعدلة
+            currentEdit.cell.classList.add('cell-modified');
+            setTimeout(() => {
+                currentEdit.cell.classList.remove('cell-modified');
+            }, 2000);
+            
+            // إظهار إشعار إذا كان هناك تغيير
+            if (oldValue !== newValue) {
+                showNotification("تم حفظ التعديل (Ctrl+Z للتراجع)", "success");
+            }
+            
+            // تحديث الإحصائيات
+            updateStats();
+            
+            // حفظ إلى التخزين المحلي
+            saveToLocalStorage();
+            updateUndoButtons();
+            
+            // إخفاء طبقة الحماية
+            editProtection.style.display = 'none';
+            
+            // إعادة تعيين حالة التعديل
+            resetCurrentEdit();
+        }
+        
+        // إلغاء التعديل الحالي
+        function cancelCurrentEdit() {
+            if (!currentEdit.cell) return;
+            
+            // استعادة المحتوى الأصلي
+            currentEdit.cell.innerHTML = currentEdit.originalContent;
+            
+            // إعادة إضافة class dropdown-cell إذا لزم الأمر
+            const fieldName = currentEdit.fieldName;
+            if (fieldName === 'type' || fieldName === 'area') {
+                currentEdit.cell.classList.add('dropdown-cell');
+            }
+            
+            // إزالة الحالة المحفوظة في نظام التراجع
+            if (undoStack.length > 0) {
+                undoStack.pop();
+                updateUndoButtons();
+            }
+            
+            // إخفاء طبقة الحماية
+            editProtection.style.display = 'none';
+            
+            // إعادة تعيين حالة التعديل
+            resetCurrentEdit();
+            
+            showNotification("تم إلغاء التعديل", "info");
+        }
+        
+        // إعادة تعيين حالة التعديل الحالي
+        function resetCurrentEdit() {
+            currentEdit.cell = null;
+            currentEdit.originalContent = null;
+            currentEdit.rowIndex = null;
+            currentEdit.cellIndex = null;
+            currentEdit.fieldName = null;
+            currentEdit.oldValue = null;
+        }
+        
+        // الحصول على قيمة الخلية من HTML
+        function getCellValue(html) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // إذا كان هناك عنصر span (نوع الاعتماد، الحالة، أو no-data)
+            const span = tempDiv.querySelector('span');
+            if (span) {
+                // إذا كان نوع الاعتماد
+                if (span.classList.contains('type-badge')) {
+                    const type = APPROVAL_TYPES.find(t => span.textContent === t.label);
+                    return type ? type.value : span.textContent;
+                }
+                // إذا كان no-data
+                if (span.classList.contains('no-data')) {
+                    return '';
+                }
+                return span.textContent.replace('code ', '').replace('CODE ', '');
+            }
+            
+            // نص عادي
+            const text = tempDiv.textContent.trim();
+            return text === '---' ? '' : text;
+        }
+        
+        // تحرير صف كامل
+        function editRow(rowIndex) {
+            if (isViewerMode) return;
+            
+            saveStateBeforeEdit("multiEdit", rowIndex);
+            
+            const rows = tableBody.querySelectorAll('tr');
+            if (rows[rowIndex]) {
+                const cells = rows[rowIndex].querySelectorAll('td');
+                if (cells.length > 0) {
+                    cells[0].click();
+                }
+            }
+        }
+        
+        // حذف صف
+        function deleteRow(rowIndex) {
+            if (isViewerMode) return;
+            
+            if (confirm("هل أنت متأكد من حذف هذا السجل؟")) {
+                const deletedRow = JSON.parse(JSON.stringify(shopDrawingData[rowIndex]));
+                saveStateBeforeEdit("delete", rowIndex, null, deletedRow, null);
+                
+                shopDrawingData.splice(rowIndex, 1);
+                loadData();
+                
+                showNotification("تم حذف السجل (Ctrl+Z للتراجع)", "success");
+                saveToLocalStorage();
+            }
+        }
+        
+        // توليد رقم تسلسلي جديد
+        function generateNewNo() {
+            const maxNo = shopDrawingData.reduce((max, item) => {
+                const no = parseInt(item.no);
+                return no > max ? no : max;
+            }, 0);
+            return (maxNo + 1).toString().padStart(2, '0');
+        }
+        
+        // إضافة سجل جديد
+        function addNewRecord() {
+            if (isViewerMode) {
+                showNotification("لا يمكنك إضافة سجلات في وضع المشاهد", "error");
+                return;
+            }
+            
+            const newRecord = {
+                no: generateNewNo(),
+                type: document.getElementById('newType').value,
+                area: document.getElementById('newArea').value,
+                revision: document.getElementById('newRevision').value || "00",
+                request: document.getElementById('newRequest').value,
+                receiveDate: document.getElementById('newReceiveDate').value,
+                status: document.getElementById('newStatus').value,
+                approveDate: document.getElementById('newApproveDate').value,
+                responsible: document.getElementById('newResponsible').value,
+                notes: document.getElementById('newNotes').value
+            };
+            
+            // التحقق من البيانات المطلوبة
+            if (!newRecord.type || !newRecord.area || !newRecord.request || !newRecord.receiveDate) {
+                showNotification("الرجاء ملء جميع الحقول المطلوبة (النوع، المنطقة، الطلب، تاريخ الاستلام)", "error");
+                return;
+            }
+            
+            saveStateBeforeEdit("add", shopDrawingData.length, null, null, newRecord);
+            shopDrawingData.push(newRecord);
+            loadData();
+            addRowForm.style.display = 'none';
+            
+            // إعادة تعيين الحقول مع الحفاظ على القيم المختارة سابقاً
+            document.getElementById('newNo').value = generateNewNo();
+            document.getElementById('newRequest').value = '';
+            document.getElementById('newNotes').value = '';
+            
+            // عدم إعادة تعيين القيم المختارة من dropdowns
+            document.getElementById('newReceiveDate').valueAsDate = new Date();
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            document.getElementById('newApproveDate').valueAsDate = nextWeek;
+            document.getElementById('newResponsible').value = '';
+            
+            showNotification("تم إضافة السجل الجديد (Ctrl+Z للتراجع)", "success");
+            saveToLocalStorage();
+        }
+        
+        // تطبيق الفلترة
+        function applyFilters() {
+            let dataToFilter = [...shopDrawingData];
+            
+            if (filterType.value) {
+                dataToFilter = dataToFilter.filter(item => item.type === filterType.value);
+            }
+            
+            if (filterArea.value) {
+                dataToFilter = dataToFilter.filter(item => item.area === filterArea.value);
+            }
+            
+            if (filterStatus.value) {
+                dataToFilter = dataToFilter.filter(item => item.status === filterStatus.value);
+            }
+            
+            if (filterFromDate.value) {
+                dataToFilter = dataToFilter.filter(item => {
+                    return new Date(item.receiveDate) >= new Date(filterFromDate.value);
+                });
+            }
+            
+            if (filterToDate.value) {
+                dataToFilter = dataToFilter.filter(item => {
+                    return new Date(item.receiveDate) <= new Date(filterToDate.value);
+                });
+            }
+            
+            loadData(dataToFilter);
+            showNotification(`تم تطبيق الفلترة، ${dataToFilter.length} سجل معروض`, "info");
+        }
+        
+        // مسح الفلترة
+        function clearFilters() {
+            filterType.value = '';
+            filterArea.value = '';
+            filterStatus.value = '';
+            
+            const today = new Date();
+            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+            filterFromDate.valueAsDate = lastMonth;
+            filterToDate.valueAsDate = today;
+            
+            loadData();
+            showNotification("تم مسح جميع الفلاتر", "info");
+        }
+        
+        // تحديث الإحصائيات
+        function updateStats(data = shopDrawingData) {
+            totalRecords.textContent = data.length;
+            
+            const statusACount = data.filter(item => item.status === 'code A').length;
+            const statusBCount = data.filter(item => item.status === 'code B').length;
+            const statusCCount = data.filter(item => item.status === 'CODE C').length;
+            
+            statusA.textContent = statusACount;
+            statusB.textContent = statusBCount;
+            statusC.textContent = statusCCount;
+        }
+        
+        // تنسيق التاريخ
+        function formatDate(dateString) {
+            if (!dateString) return '<span class="no-data">---</span>';
+            
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            
+            return date.toLocaleDateString('ar-EG');
+        }
+        
+        // إنشاء بادجة الحالة
+        function getStatusBadge(status) {
+            if (!status) return '<span class="no-data">---</span>';
+            
+            if (status === 'code A') {
+                return '<span class="status-a">code A</span>';
+            } else if (status === 'code B') {
+                return '<span class="status-b">code B</span>';
+            } else if (status === 'CODE C') {
+                return '<span class="status-c">CODE C</span>';
+            }
+            
+            return status;
+        }
+        
+        // إظهار الإشعارات
+        function showNotification(message, type = "info") {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // حفظ إلى التخزين المحلي
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('shopDrawingData', JSON.stringify(shopDrawingData));
+                localStorage.setItem('undoStack', JSON.stringify(undoStack));
+                localStorage.setItem('redoStack', JSON.stringify(redoStack));
+                
+                lastSavedTime = new Date();
+                lastSavedElement.textContent = `آخر حفظ: ${lastSavedTime.toLocaleTimeString('ar-EG')}`;
+                
+            } catch (error) {
+                console.error("خطأ في حفظ البيانات:", error);
+            }
+        }
+        
+        // تحميل من التخزين المحلي
+        function loadFromLocalStorage() {
+            try {
+                const savedData = localStorage.getItem('shopDrawingData');
+                const savedUndoStack = localStorage.getItem('undoStack');
+                const savedRedoStack = localStorage.getItem('redoStack');
+                const savedLastExport = localStorage.getItem('lastExportTime');
+                
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    if (Array.isArray(parsedData) && parsedData.length > 0) {
+                        shopDrawingData = parsedData;
+                    }
+                }
+                
+                if (savedUndoStack) {
+                    undoStack = JSON.parse(savedUndoStack) || [];
+                }
+                
+                if (savedRedoStack) {
+                    redoStack = JSON.parse(savedRedoStack) || [];
+                }
+                
+                if (savedLastExport) {
+                    lastExportTime = new Date(savedLastExport);
+                    lastExportElement.textContent = lastExportTime.toLocaleString('ar-EG');
+                }
+                
+            } catch (error) {
+                console.error("خطأ في تحميل البيانات:", error);
+            }
+        }
+        
+        // بدء الحفظ التلقائي
+        function startAutoSave() {
+            saveToLocalStorage();
+            autoSaveInterval = setInterval(() => {
+                saveToLocalStorage();
+            }, 60000);
+        }
+        
+        // اختيار خيار التصدير
+        function selectExportOption(option) {
+            document.getElementById('exportCurrent').checked = option === 'current';
+            document.getElementById('exportAll').checked = option === 'all';
+        }
+        
+        // تصدير البيانات إلى Excel
+        function exportToExcel() {
+            const exportOption = document.querySelector('input[name="exportOption"]:checked').value;
+            const useExcelDates = includeDates.checked;
+            const includeStatistics = includeStats.checked;
+            
+            let dataToExport;
+            let sheetName = "بيانات الشوب دروينج";
+            
+            if (exportOption === 'current' && filteredData) {
+                dataToExport = filteredData;
+                sheetName = "بيانات معروضة";
+            } else {
+                dataToExport = shopDrawingData;
+                sheetName = "جميع البيانات";
+            }
+            
+            if (dataToExport.length === 0) {
+                showNotification("لا توجد بيانات للتصدير", "error");
+                return;
+            }
+            
+            // إظهار شاشة التحميل
+            exportLoading.style.display = 'flex';
+            
+            // محاكاة التحميل
+            setTimeout(() => {
+                try {
+                    // تحضير البيانات للتصدير
+                    const exportData = dataToExport.map(item => ({
+                        'NO': item.no,
+                        'نوع الاعتماد': item.type,
+                        'المنطقة': item.area,
+                        'REVISION': item.revision,
+                        'طلب الاعتماد': item.request,
+                        'تاريخ استلام الطلب': useExcelDates ? excelDateFromJSDate(new Date(item.receiveDate)) : formatDateForExport(item.receiveDate),
+                        'حالة الاعتماد': item.status,
+                        'تاريخ الاعتماد': useExcelDates && item.approveDate ? excelDateFromJSDate(new Date(item.approveDate)) : formatDateForExport(item.approveDate),
+                        'المسؤول': item.responsible || '',
+                        'ملاحظات': item.notes || ''
+                    }));
+                    
+                    // إنشاء ورقة العمل الرئيسية
+                    const ws = XLSX.utils.json_to_sheet(exportData);
+                    
+                    // تحديد الأعمدة العربية
+                    const wscols = [
+                        { wch: 5 },   // NO
+                        { wch: 10 },  // نوع الاعتماد
+                        { wch: 15 },  // المنطقة
+                        { wch: 10 },  // REVISION
+                        { wch: 40 },  // طلب الاعتماد
+                        { wch: 15 },  // تاريخ استلام الطلب
+                        { wch: 12 },  // حالة الاعتماد
+                        { wch: 15 },  // تاريخ الاعتماد
+                        { wch: 15 },  // المسؤول
+                        { wch: 20 }   // ملاحظات
+                    ];
+                    ws['!cols'] = wscols;
+                    
+                    // إنشاء كتيب Excel
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                    
+                    // إضافة صفحة الإحصاءات إذا طلب المستخدم
+                    if (includeStatistics) {
+                        const statsData = [
+                            ['إحصائيات بيانات الشوب دروينج'],
+                            [''],
+                            ['تاريخ التصدير:', new Date().toLocaleString('ar-EG')],
+                            ['عدد السجلات المصدرة:', dataToExport.length],
+                            [''],
+                            ['توزيع أنواع الاعتماد:'],
+                            ...APPROVAL_TYPES.map(type => [`${type.label}:`, dataToExport.filter(item => item.type === type.value).length]),
+                            [''],
+                            ['توزيع المناطق:'],
+                            ...AREAS.filter(a => a !== 'أخرى').map(area => [`${area}:`, dataToExport.filter(item => item.area === area).length]),
+                            [''],
+                            ['توزيع الحالات:'],
+                            ['A:', dataToExport.filter(item => item.status === 'code A').length],
+                            ['B:', dataToExport.filter(item => item.status === 'code B').length],
+                            ['C:', dataToExport.filter(item => item.status === 'CODE C').length],
+                            ['بدون حالة:', dataToExport.filter(item => !item.status).length],
+                            [''],
+                            ['ملاحظات:'],
+                            ['تم التصدير من نظام إدارة سجل الشوب دروينج'],
+                            ['التاريخ: ' + new Date().toLocaleDateString('ar-EG')]
+                        ];
+                        
+                        const ws2 = XLSX.utils.aoa_to_sheet(statsData);
+                        ws2['!cols'] = [
+                            { wch: 25 },
+                            { wch: 15 }
+                        ];
+                        XLSX.utils.book_append_sheet(wb, ws2, "الإحصائيات");
+                    }
+                    
+                    // إنشاء اسم للملف
+                    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                    const timeStr = new Date().toTimeString().slice(0, 8).replace(/:/g, '');
+                    const fileName = `shop_drawing_export_${dateStr}_${timeStr}.xlsx`;
+                    
+                    // حفظ الملف
+                    XLSX.writeFile(wb, fileName);
+                    
+                    // تحديث وقت آخر تصدير
+                    lastExportTime = new Date();
+                    lastExportElement.textContent = lastExportTime.toLocaleString('ar-EG');
+                    localStorage.setItem('lastExportTime', lastExportTime.toISOString());
+                    
+                    // إخفاء شاشة التحميل
+                    exportLoading.style.display = 'none';
+                    
+                    // إغلاق نافذة التصدير
+                    exportModal.style.display = 'none';
+                    
+                    // إظهار إشعار النجاح
+                    showNotification(`تم تصدير ${dataToExport.length} سجل إلى ملف Excel`, "success");
+                    
+                } catch (error) {
+                    console.error("خطأ في التصدير:", error);
+                    exportLoading.style.display = 'none';
+                    showNotification("حدث خطأ أثناء التصدير", "error");
+                }
+            }, 1000);
+        }
+        
+        // تحويل التاريخ إلى تنسيق Excel
+        function excelDateFromJSDate(date) {
+            if (!date || isNaN(date.getTime())) return '';
+            
+            const excelEpoch = new Date(1899, 11, 30);
+            const diff = date - excelEpoch;
+            return Math.floor(diff / (1000 * 60 * 60 * 24));
+        }
+        
+        // تنسيق التاريخ للتصدير
+        function formatDateForExport(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            
+            return date.toLocaleDateString('ar-EG');
+        }
+        
+        // التعامل مع مفاتيح الاختصار
+        function handleKeyShortcuts(e) {
+            // تجاهل إذا كان المستخدم في حقل إدخال أو dropdown
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                if (e.key === 'Escape' && currentEdit.cell) {
+                    e.preventDefault();
+                    cancelCurrentEdit();
+                }
+                return;
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                if (!isViewerMode && undoStack.length > 0) {
+                    undo();
+                }
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                e.preventDefault();
+                if (!isViewerMode && redoStack.length > 0) {
+                    redo();
+                }
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveToLocalStorage();
+                showNotification("تم حفظ البيانات يدوياً", "success");
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                if (!isViewerMode) {
+                    showAddForm.click();
+                }
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                if (!isViewerMode) {
+                    exportBtn.click();
+                }
+            }
+            
+            if (e.key === 'Escape' && currentEdit.cell) {
+                e.preventDefault();
+                cancelCurrentEdit();
+            }
+        }
+        
+        // أحداث المستخدم
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            login(username, password);
+        });
+        
+        viewerLogin.addEventListener('click', () => {
+            login(null, null, true);
+        });
+        
+        logoutButton.addEventListener('click', logout);
+        
+        showAddForm.addEventListener('click', () => {
+            if (isViewerMode) {
+                showNotification("لا يمكنك إضافة سجلات في وضع المشاهد", "error");
+                return;
+            }
+            
+            // تعيين القيم الافتراضية
+            document.getElementById('newNo').value = generateNewNo();
+            document.getElementById('newType').value = 'STR';
+            document.getElementById('newArea').value = 'المبني الرئيسي';
+            document.getElementById('newRevision').value = '00';
+            document.getElementById('newReceiveDate').valueAsDate = new Date();
+            
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            document.getElementById('newApproveDate').valueAsDate = nextWeek;
+            
+            addRowForm.style.display = 'block';
+        });
+        
+        saveNewRow.addEventListener('click', addNewRecord);
+        
+        cancelAddRow.addEventListener('click', () => {
+            addRowForm.style.display = 'none';
+        });
+        
+        applyFilter.addEventListener('click', applyFilters);
+        
+        clearFilter.addEventListener('click', clearFilters);
+        
+        resetFilterBtn.addEventListener('click', clearFilters);
+        
+        undoBtn.addEventListener('click', undo);
+        
+        redoBtn.addEventListener('click', redo);
+        
+        hideUndoInfo.addEventListener('click', () => {
+            undoInfoBar.style.display = 'none';
+            showUndoInfo = false;
+            localStorage.setItem('hideUndoInfo', 'true');
+        });
+        
+        showTestAccountsLink.addEventListener('click', toggleTestAccounts);
+        
+        exportBtn.addEventListener('click', () => {
+            exportModal.style.display = 'flex';
+        });
+        
+        cancelExport.addEventListener('click', () => {
+            exportModal.style.display = 'none';
+        });
+        
+        confirmExport.addEventListener('click', exportToExcel);
+        
+        // إضافة مستمع لاختصارات لوحة المفاتيح
+        document.addEventListener('keydown', handleKeyShortcuts);
+        
+        // عند النقر خارج الخلية المحررة، إلغاء التعديل فقط إذا نقر خارج الجدول
+        document.addEventListener('click', (e) => {
+            if (currentEdit.cell && !currentEdit.cell.contains(e.target)) {
+                // إذا كان النقر على زر الحفظ أو الإلغاء في الخلية، لا تفعل شيئاً
+                if (e.target.closest('.cell-actions')) {
+                    return;
+                }
+                
+                // إذا كان النقر على زر التراجع أو الإعادة، لا تفعل شيئاً
+                if (e.target === undoBtn || e.target === redoBtn || 
+                    undoBtn.contains(e.target) || redoBtn.contains(e.target)) {
+                    return;
+                }
+                
+                // إذا كان النقر خارج الخلية المحررة، إلغاء التعديل
+                cancelCurrentEdit();
+            }
+        });
+        
+        // عند تحميل الصفحة
+        window.addEventListener('load', () => {
+            loadFromLocalStorage();
+            lastSavedElement.textContent = "لم يتم الحفظ بعد";
+            
+            if (localStorage.getItem('hideUndoInfo') === 'true') {
+                showUndoInfo = false;
+            }
+        });
+        
+        // منع إغلاق الصفحة دون حفظ
+        window.addEventListener('beforeunload', (e) => {
+            if (!isViewerMode && undoStack.length > 0) {
+                saveToLocalStorage();
+                e.preventDefault();
+                e.returnValue = 'هناك تغييرات غير محفوظة. هل تريد مغادرة الصفحة؟';
+            }
+        });
+        
+        // تحميل البيانات الأولية وعرضها
+        loadData();
+        updateStats();
+        updateUndoButtons();
+    </script>
+</body>
+</html>
